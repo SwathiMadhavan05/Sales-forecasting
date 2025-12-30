@@ -1,9 +1,9 @@
-#force deploy
 import os
 import pandas as pd
 import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
+from datetime import timedelta
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -15,20 +15,19 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 # PAGE CONFIG
 # --------------------------------------------------
 st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
-
 st.title("📊 Sales Forecasting Dashboard")
-st.write("Interactive Sales Forecasting using Machine Learning")
+st.write("Interactive sales analysis and forecasting using machine learning")
 
 # --------------------------------------------------
-# LOAD DATA (SAFE FOR STREAMLIT CLOUD)
+# LOAD DATA (STREAMLIT SAFE)
 # --------------------------------------------------
 @st.cache_data
 def load_data():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.dirname(os.path.abspath(__file__))
 
-    train = pd.read_csv(os.path.join(BASE_DIR, "data", "train.csv"))
-    features = pd.read_csv(os.path.join(BASE_DIR, "data", "features.csv"))
-    stores = pd.read_csv(os.path.join(BASE_DIR, "data", "stores.csv"))
+    train = pd.read_csv(os.path.join(base_dir, "data", "train.csv"))
+    features = pd.read_csv(os.path.join(base_dir, "data", "features.csv"))
+    stores = pd.read_csv(os.path.join(base_dir, "data", "stores.csv"))
 
     df = train.merge(features, on=["Store", "Date", "IsHoliday"], how="left")
     df = df.merge(stores, on="Store", how="left")
@@ -53,12 +52,14 @@ st.sidebar.header("🔧 User Inputs")
 
 store_id = st.sidebar.selectbox(
     "Select Store",
-    sorted(df["Store"].unique())
+    options=sorted(df["Store"].unique()),
+    format_func=lambda x: f"Store {x}"
 )
 
 dept_id = st.sidebar.selectbox(
     "Select Department",
-    sorted(df["Dept"].unique())
+    options=sorted(df["Dept"].unique()),
+    format_func=lambda x: f"Department {x}"
 )
 
 min_date = df["Date"].min()
@@ -76,10 +77,12 @@ model_type = st.sidebar.radio(
     ["Linear Regression", "Support Vector Regression (SVR)"]
 )
 
-test_size = st.sidebar.slider("Test Size", 0.1, 0.4, 0.2)
+holiday_only = st.sidebar.checkbox("Show Holiday Sales Only")
+
+weeks_ahead = st.sidebar.slider("Forecast Weeks Ahead", 1, 12, 4)
 
 # --------------------------------------------------
-# FILTER DATA BASED ON USER INPUT
+# FILTER DATA
 # --------------------------------------------------
 filtered_df = df[
     (df["Store"] == store_id) &
@@ -88,14 +91,27 @@ filtered_df = df[
     (df["Date"] <= pd.to_datetime(date_range[1]))
 ]
 
-if filtered_df.shape[0] < 20:
-    st.warning("Not enough data for the selected filters.")
+if holiday_only:
+    filtered_df = filtered_df[filtered_df["IsHoliday"] == True]
+
+if filtered_df.shape[0] < 30:
+    st.warning("Not enough data for selected inputs.")
     st.stop()
+
+# --------------------------------------------------
+# KEY BUSINESS METRICS
+# --------------------------------------------------
+st.subheader("📌 Key Business Metrics")
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Sales", f"{filtered_df['Weekly_Sales'].sum():,.0f}")
+col2.metric("Average Weekly Sales", f"{filtered_df['Weekly_Sales'].mean():,.0f}")
+col3.metric("Maximum Weekly Sales", f"{filtered_df['Weekly_Sales'].max():,.0f}")
 
 # --------------------------------------------------
 # FEATURE SELECTION
 # --------------------------------------------------
-features_cols = [
+feature_cols = [
     "Year",
     "Month",
     "Week",
@@ -107,14 +123,14 @@ features_cols = [
     "Size"
 ]
 
-X = filtered_df[features_cols]
+X = filtered_df[feature_cols]
 y = filtered_df["Weekly_Sales"]
 
 # --------------------------------------------------
 # TRAIN / TEST SPLIT
 # --------------------------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=test_size, shuffle=False
+    X, y, test_size=0.2, shuffle=False
 )
 
 # --------------------------------------------------
@@ -124,6 +140,7 @@ if model_type == "Linear Regression":
     model = LinearRegression()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
+    X_future = X.tail(1).copy()
 
 else:
     scaler = StandardScaler()
@@ -134,19 +151,21 @@ else:
     model.fit(X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
 
+    X_future = scaler.transform(X.tail(1))
+
 # --------------------------------------------------
-# METRICS
+# MODEL METRICS
 # --------------------------------------------------
 mae = mean_absolute_error(y_test, y_pred)
 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
 st.subheader("📈 Model Performance")
-col1, col2 = st.columns(2)
-col1.metric("MAE", f"{mae:,.2f}")
-col2.metric("RMSE", f"{rmse:,.2f}")
+col4, col5 = st.columns(2)
+col4.metric("MAE", f"{mae:,.2f}")
+col5.metric("RMSE", f"{rmse:,.2f}")
 
 # --------------------------------------------------
-# PLOT ACTUAL VS PREDICTED
+# ACTUAL VS PREDICTED PLOT
 # --------------------------------------------------
 st.subheader("📉 Actual vs Predicted Sales")
 
@@ -156,8 +175,32 @@ ax.plot(y_pred, label="Predicted")
 ax.set_xlabel("Time")
 ax.set_ylabel("Weekly Sales")
 ax.legend()
-
 st.pyplot(fig)
+
+# --------------------------------------------------
+# FUTURE SALES FORECAST
+# --------------------------------------------------
+st.subheader("🔮 Future Sales Forecast")
+
+future_sales = []
+last_date = filtered_df["Date"].max()
+
+for i in range(weeks_ahead):
+    if model_type == "Linear Regression":
+        pred = model.predict(X.tail(1))[0]
+    else:
+        pred = model.predict(X_future)[0]
+
+    future_sales.append(pred)
+
+future_dates = [last_date + timedelta(weeks=i+1) for i in range(weeks_ahead)]
+
+future_df = pd.DataFrame({
+    "Date": future_dates,
+    "Predicted Sales": future_sales
+})
+
+st.line_chart(future_df.set_index("Date"))
 
 # --------------------------------------------------
 # DATA PREVIEW

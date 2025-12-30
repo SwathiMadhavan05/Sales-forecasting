@@ -1,47 +1,40 @@
+import os
 import pandas as pd
 import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-# -------------------------------------------------
+# --------------------------------------------------
 # PAGE CONFIG
-# -------------------------------------------------
-st.set_page_config(
-    page_title="Sales Forecasting Dashboard",
-    layout="wide"
-)
+# --------------------------------------------------
+st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 
 st.title("📊 Sales Forecasting Dashboard")
-st.write("Linear Regression vs Support Vector Regression (SVR)")
+st.write("Interactive Sales Forecasting using Machine Learning")
 
-# -------------------------------------------------
-# LOAD AND PREPROCESS DATA
-# -------------------------------------------------
+# --------------------------------------------------
+# LOAD DATA (SAFE FOR STREAMLIT CLOUD)
+# --------------------------------------------------
 @st.cache_data
 def load_data():
-    train = pd.read_csv("data/train.csv")
-    features = pd.read_csv("data/features.csv")
-    stores = pd.read_csv("data/stores.csv")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # Merge datasets
+    train = pd.read_csv(os.path.join(BASE_DIR, "data", "train.csv"))
+    features = pd.read_csv(os.path.join(BASE_DIR, "data", "features.csv"))
+    stores = pd.read_csv(os.path.join(BASE_DIR, "data", "stores.csv"))
+
     df = train.merge(features, on=["Store", "Date", "IsHoliday"], how="left")
     df = df.merge(stores, on="Store", how="left")
 
-    # Convert date
     df["Date"] = pd.to_datetime(df["Date"])
-
-    # Handle missing values
     df.fillna(method="ffill", inplace=True)
     df.fillna(method="bfill", inplace=True)
-
-    # Reduce size for speed (resume-friendly)
-    df = df[(df["Store"] == 1) & (df["Dept"] == 1)]
 
     # Feature engineering
     df["Year"] = df["Date"].dt.year
@@ -51,24 +44,57 @@ def load_data():
     return df
 
 df = load_data()
-st.success("Data loaded successfully")
 
-# -------------------------------------------------
-# SIDEBAR CONTROLS
-# -------------------------------------------------
-st.sidebar.header("⚙️ Model Settings")
+# --------------------------------------------------
+# SIDEBAR INPUTS
+# --------------------------------------------------
+st.sidebar.header("🔧 User Inputs")
 
-model_choice = st.sidebar.selectbox(
+store_id = st.sidebar.selectbox(
+    "Select Store",
+    sorted(df["Store"].unique())
+)
+
+dept_id = st.sidebar.selectbox(
+    "Select Department",
+    sorted(df["Dept"].unique())
+)
+
+min_date = df["Date"].min()
+max_date = df["Date"].max()
+
+date_range = st.sidebar.date_input(
+    "Select Date Range",
+    [min_date, max_date],
+    min_value=min_date,
+    max_value=max_date
+)
+
+model_type = st.sidebar.radio(
     "Select Model",
     ["Linear Regression", "Support Vector Regression (SVR)"]
 )
 
 test_size = st.sidebar.slider("Test Size", 0.1, 0.4, 0.2)
 
-# -------------------------------------------------
+# --------------------------------------------------
+# FILTER DATA BASED ON USER INPUT
+# --------------------------------------------------
+filtered_df = df[
+    (df["Store"] == store_id) &
+    (df["Dept"] == dept_id) &
+    (df["Date"] >= pd.to_datetime(date_range[0])) &
+    (df["Date"] <= pd.to_datetime(date_range[1]))
+]
+
+if filtered_df.shape[0] < 20:
+    st.warning("Not enough data for the selected filters.")
+    st.stop()
+
+# --------------------------------------------------
 # FEATURE SELECTION
-# -------------------------------------------------
-feature_cols = [
+# --------------------------------------------------
+features_cols = [
     "Year",
     "Month",
     "Week",
@@ -80,20 +106,20 @@ feature_cols = [
     "Size"
 ]
 
-X = df[feature_cols]
-y = df["Weekly_Sales"]
+X = filtered_df[features_cols]
+y = filtered_df["Weekly_Sales"]
 
-# -------------------------------------------------
-# TRAIN-TEST SPLIT
-# -------------------------------------------------
+# --------------------------------------------------
+# TRAIN / TEST SPLIT
+# --------------------------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=test_size, shuffle=False
 )
 
-# -------------------------------------------------
+# --------------------------------------------------
 # MODEL TRAINING
-# -------------------------------------------------
-if model_choice == "Linear Regression":
+# --------------------------------------------------
+if model_type == "Linear Regression":
     model = LinearRegression()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -107,21 +133,20 @@ else:
     model.fit(X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
 
-# -------------------------------------------------
-# EVALUATION
-# -------------------------------------------------
+# --------------------------------------------------
+# METRICS
+# --------------------------------------------------
 mae = mean_absolute_error(y_test, y_pred)
 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
 st.subheader("📈 Model Performance")
-
 col1, col2 = st.columns(2)
 col1.metric("MAE", f"{mae:,.2f}")
 col2.metric("RMSE", f"{rmse:,.2f}")
 
-# -------------------------------------------------
-# PLOT RESULTS
-# -------------------------------------------------
+# --------------------------------------------------
+# PLOT ACTUAL VS PREDICTED
+# --------------------------------------------------
 st.subheader("📉 Actual vs Predicted Sales")
 
 fig, ax = plt.subplots(figsize=(10, 4))
@@ -133,8 +158,8 @@ ax.legend()
 
 st.pyplot(fig)
 
-# -------------------------------------------------
+# --------------------------------------------------
 # DATA PREVIEW
-# -------------------------------------------------
-st.subheader("📄 Data Preview")
-st.dataframe(df.head(20))
+# --------------------------------------------------
+st.subheader("📄 Filtered Data Preview")
+st.dataframe(filtered_df.head(20))

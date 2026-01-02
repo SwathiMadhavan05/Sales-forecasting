@@ -15,6 +15,123 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 # PAGE CONFIG
 # --------------------------------------------------
 st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
+# --------------------------------------------------
+# CUSTOM PROFESSIONAL CSS THEME
+# --------------------------------------------------
+st.markdown("""
+<style>
+
+/* Import Satoshi font */
+@import url('https://fonts.cdnfonts.com/css/satoshi');
+
+/* Global font */
+html, body, [class*="css"] {
+    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* App background */
+.stApp {
+    background-color: #f4f6f8;
+    color: #111827;
+}
+
+/* Main title */
+h1 {
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* Section headers */
+h2, h3 {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* Paragraph text */
+p, label {
+    color: #334155;
+    font-size: 15px;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+}
+
+/* Sidebar headers */
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #0f172a;
+}
+
+/* Sidebar widgets */
+section[data-testid="stSidebar"] label {
+    color: #475569;
+    font-weight: 500;
+}
+
+/* Metric cards */
+div[data-testid="metric-container"] {
+    background-color: #ffffff;
+    border-radius: 14px;
+    padding: 18px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+/* Metric label */
+div[data-testid="metric-container"] label {
+    font-size: 13px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Metric value */
+div[data-testid="metric-container"] div {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Buttons */
+button {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    border: none !important;
+}
+
+button:hover {
+    background-color: #1d4ed8 !important;
+}
+
+/* Dataframe */
+div[data-testid="stDataFrame"] {
+    background-color: #ffffff;
+    border-radius: 14px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Charts spacing */
+canvas {
+    margin-top: 12px;
+}
+
+/* Hide Streamlit footer */
+footer {
+    visibility: hidden;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 st.title("📊 Sales Forecasting Dashboard")
 st.write("Interactive sales analysis and forecasting using machine learning")
 

@@ -17,7 +17,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 # --------------------------------------------------
 # CUSTOM PROFESSIONAL CSS THEME
-# --------------------------------------------------
+st.markdown("", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 

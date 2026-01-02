@@ -17,95 +17,71 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 # PAGE CONFIG
 # --------------------------------------------------
 st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
-# --------------------------------------------------
+
 # CUSTOM PROFESSIONAL CSS THEME
-st.markdown("""
-<style>
+# --------------------------------------------------
+st.markdown(
+    f"""
+    <style>
+    /* cache-buster: {np.random.rand()} */
 
-/* Import Satoshi */
-@import url('https://fonts.cdnfonts.com/css/satoshi');
+    @import url('https://fonts.cdnfonts.com/css/satoshi');
 
-/* Force font everywhere */
-* {
-    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif !important;
-}
+    * {{
+        font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }}
 
-/* App background */
-.stApp {
-    background-color: #f4f6f8;
-}
+    /* App background */
+    .stApp {{
+        background-color: #eaf2ff;
+    }}
 
-/* Main container */
-.block-container {
-    padding-top: 2rem;
-}
+    /* Container */
+    .block-container {{
+        padding-top: 2rem;
+    }}
 
-/* Headings */
-h1 {
-    color: #0f172a;
-    font-weight: 700;
-}
+    /* FORCE headings */
+    h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {{
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }}
 
-h2, h3 {
-    color: #1e293b;
-    font-weight: 600;
-}
+    /* Sidebar */
+    [data-testid="stSidebar"] {{
+        background-color: #ffffff;
+        border-right: 1px solid #e2e8f0;
+    }}
 
-/* Sidebar */
-.css-1d391kg, [data-testid="stSidebar"] {
-    background-color: #ffffff;
-    border-right: 1px solid #e2e8f0;
-}
+    /* Metrics */
+    [data-testid="stMetric"] {{
+        background-color: #ffffff;
+        padding: 16px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }}
 
-/* Metrics */
-[data-testid="stMetric"] {
-    background-color: #ffffff;
-    padding: 16px;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-}
+    /* Buttons */
+    button {{
+        background-color: #2563eb !important;
+        color: white !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+    }}
 
-/* Metric label */
-[data-testid="stMetricLabel"] {
-    color: #64748b;
-    font-size: 13px;
-    letter-spacing: 0.04em;
-}
+    /* Hide footer */
+    footer {{
+        visibility: hidden;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-/* Metric value */
-[data-testid="stMetricValue"] {
-    color: #0f172a;
-    font-size: 28px;
-    font-weight: 700;
-}
-
-/* Buttons */
-button {
-    background-color: #2563eb !important;
-    color: white !important;
-    border-radius: 10px !important;
-    font-weight: 600 !important;
-}
-
-button:hover {
-    background-color: #1d4ed8 !important;
-}
-
-/* Dataframe */
-[data-testid="stDataFrame"] {
-    background-color: white;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-}
-
-/* Hide footer */
-footer {
-    visibility: hidden;
-}
-
-</style>
-""", unsafe_allow_html=True)
 
 # --------------------------------------------------
 # LOAD DATA (STREAMLIT SAFE)

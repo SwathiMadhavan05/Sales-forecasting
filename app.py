@@ -19,95 +19,73 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 # --------------------------------------------------
 # CUSTOM PROFESSIONAL CSS THEME
-st.markdown("", unsafe_allow_html=True)
-
 st.markdown("""
 <style>
 
-/* Import Satoshi font */
+/* Import Satoshi */
 @import url('https://fonts.cdnfonts.com/css/satoshi');
 
-/* Global font */
-html, body, [class*="css"] {
-    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
+/* Force font everywhere */
+* {
+    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /* App background */
 .stApp {
     background-color: #f4f6f8;
-    color: #111827;
 }
 
-/* Main title */
+/* Main container */
+.block-container {
+    padding-top: 2rem;
+}
+
+/* Headings */
 h1 {
     color: #0f172a;
     font-weight: 700;
-    letter-spacing: -0.5px;
 }
 
-/* Section headers */
 h2, h3 {
     color: #1e293b;
     font-weight: 600;
 }
 
-/* Paragraph text */
-p, label {
-    color: #334155;
-    font-size: 15px;
-}
-
 /* Sidebar */
-section[data-testid="stSidebar"] {
+.css-1d391kg, [data-testid="stSidebar"] {
     background-color: #ffffff;
     border-right: 1px solid #e2e8f0;
 }
 
-/* Sidebar headers */
-section[data-testid="stSidebar"] h1,
-section[data-testid="stSidebar"] h2,
-section[data-testid="stSidebar"] h3 {
-    color: #0f172a;
-}
-
-/* Sidebar widgets */
-section[data-testid="stSidebar"] label {
-    color: #475569;
-    font-weight: 500;
-}
-
-/* Metric cards */
-div[data-testid="metric-container"] {
+/* Metrics */
+[data-testid="stMetric"] {
     background-color: #ffffff;
+    padding: 16px;
     border-radius: 14px;
-    padding: 18px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 
 /* Metric label */
-div[data-testid="metric-container"] label {
-    font-size: 13px;
+[data-testid="stMetricLabel"] {
     color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 13px;
+    letter-spacing: 0.04em;
 }
 
 /* Metric value */
-div[data-testid="metric-container"] div {
+[data-testid="stMetricValue"] {
+    color: #0f172a;
     font-size: 28px;
     font-weight: 700;
-    color: #0f172a;
 }
 
 /* Buttons */
 button {
     background-color: #2563eb !important;
-    color: #ffffff !important;
+    color: white !important;
     border-radius: 10px !important;
-    padding: 8px 16px !important;
     font-weight: 600 !important;
-    border: none !important;
 }
 
 button:hover {
@@ -115,28 +93,19 @@ button:hover {
 }
 
 /* Dataframe */
-div[data-testid="stDataFrame"] {
-    background-color: #ffffff;
+[data-testid="stDataFrame"] {
+    background-color: white;
     border-radius: 14px;
-    padding: 12px;
     border: 1px solid #e2e8f0;
 }
 
-/* Charts spacing */
-canvas {
-    margin-top: 12px;
-}
-
-/* Hide Streamlit footer */
+/* Hide footer */
 footer {
     visibility: hidden;
 }
 
 </style>
 """, unsafe_allow_html=True)
-
-st.title("📊 Sales Forecasting Dashboard")
-st.write("Interactive sales analysis and forecasting using machine learning")
 
 # --------------------------------------------------
 # LOAD DATA (STREAMLIT SAFE)

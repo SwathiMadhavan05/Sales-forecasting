@@ -1,5 +1,7 @@
-# force css reload
+#force css reload 
 
+# IMPORTS
+# --------------------------------------------------
 import os
 import pandas as pd
 import numpy as np
@@ -18,7 +20,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 # --------------------------------------------------
 st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 
-# CUSTOM PROFESSIONAL CSS THEME
+# --------------------------------------------------
+# CUSTOM CSS (FINAL FIXED VERSION)
 # --------------------------------------------------
 st.markdown(
     f"""
@@ -29,6 +32,7 @@ st.markdown(
 
     * {{
         font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        color: #0f172a !important;
     }}
 
     /* App background */
@@ -36,12 +40,12 @@ st.markdown(
         background-color: #eaf2ff;
     }}
 
-    /* Container */
+    /* Main container */
     .block-container {{
         padding-top: 2rem;
     }}
 
-    /* FORCE headings */
+    /* Headings */
     h1, h2, h3, h4, h5, h6,
     [data-testid="stMarkdownContainer"] h1,
     [data-testid="stMarkdownContainer"] h2,
@@ -50,10 +54,19 @@ st.markdown(
         font-weight: 700 !important;
     }}
 
+    /* Markdown text */
+    [data-testid="stMarkdownContainer"] * {{
+        color: #0f172a !important;
+    }}
+
     /* Sidebar */
     [data-testid="stSidebar"] {{
         background-color: #ffffff;
         border-right: 1px solid #e2e8f0;
+    }}
+
+    [data-testid="stSidebar"] * {{
+        color: #0f172a !important;
     }}
 
     /* Metrics */
@@ -65,10 +78,26 @@ st.markdown(
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
     }}
 
+    [data-testid="stMetricLabel"] {{
+        color: #475569 !important;
+        font-size: 13px;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        color: #0f172a !important;
+        font-size: 28px;
+        font-weight: 700 !important;
+    }}
+
+    /* Inputs */
+    input, select, textarea {{
+        color: #0f172a !important;
+    }}
+
     /* Buttons */
     button {{
         background-color: #2563eb !important;
-        color: white !important;
+        color: #ffffff !important;
         border-radius: 10px !important;
         font-weight: 600 !important;
     }}
@@ -82,9 +111,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # --------------------------------------------------
-# LOAD DATA (STREAMLIT SAFE)
+# LOAD DATA
 # --------------------------------------------------
 @st.cache_data
 def load_data():
@@ -101,7 +129,6 @@ def load_data():
     df.fillna(method="ffill", inplace=True)
     df.fillna(method="bfill", inplace=True)
 
-    # Feature engineering
     df["Year"] = df["Date"].dt.year
     df["Month"] = df["Date"].dt.month
     df["Week"] = df["Date"].dt.isocalendar().week.astype(int)
@@ -143,7 +170,6 @@ model_type = st.sidebar.radio(
 )
 
 holiday_only = st.sidebar.checkbox("Show Holiday Sales Only")
-
 weeks_ahead = st.sidebar.slider("Forecast Weeks Ahead", 1, 12, 4)
 
 # --------------------------------------------------
@@ -164,7 +190,7 @@ if filtered_df.shape[0] < 30:
     st.stop()
 
 # --------------------------------------------------
-# KEY BUSINESS METRICS
+# BUSINESS METRICS
 # --------------------------------------------------
 st.subheader("📌 Key Business Metrics")
 
@@ -177,15 +203,9 @@ col3.metric("Maximum Weekly Sales", f"{filtered_df['Weekly_Sales'].max():,.0f}")
 # FEATURE SELECTION
 # --------------------------------------------------
 feature_cols = [
-    "Year",
-    "Month",
-    "Week",
-    "IsHoliday",
-    "Temperature",
-    "Fuel_Price",
-    "CPI",
-    "Unemployment",
-    "Size"
+    "Year", "Month", "Week", "IsHoliday",
+    "Temperature", "Fuel_Price", "CPI",
+    "Unemployment", "Size"
 ]
 
 X = filtered_df[feature_cols]
@@ -206,7 +226,6 @@ if model_type == "Linear Regression":
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     X_future = X.tail(1).copy()
-
 else:
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -215,7 +234,6 @@ else:
     model = SVR(kernel="rbf", C=100, epsilon=0.1)
     model.fit(X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
-
     X_future = scaler.transform(X.tail(1))
 
 # --------------------------------------------------
@@ -225,12 +243,12 @@ mae = mean_absolute_error(y_test, y_pred)
 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
 st.subheader("📈 Model Performance")
-col4, col5 = st.columns(2)
-col4.metric("MAE", f"{mae:,.2f}")
-col5.metric("RMSE", f"{rmse:,.2f}")
+c4, c5 = st.columns(2)
+c4.metric("MAE", f"{mae:,.2f}")
+c5.metric("RMSE", f"{rmse:,.2f}")
 
 # --------------------------------------------------
-# ACTUAL VS PREDICTED PLOT
+# ACTUAL VS PREDICTED
 # --------------------------------------------------
 st.subheader("📉 Actual vs Predicted Sales")
 
@@ -243,22 +261,21 @@ ax.legend()
 st.pyplot(fig)
 
 # --------------------------------------------------
-# FUTURE SALES FORECAST
+# FUTURE FORECAST
 # --------------------------------------------------
 st.subheader("🔮 Future Sales Forecast")
 
 future_sales = []
 last_date = filtered_df["Date"].max()
 
-for i in range(weeks_ahead):
+for _ in range(weeks_ahead):
     if model_type == "Linear Regression":
         pred = model.predict(X.tail(1))[0]
     else:
         pred = model.predict(X_future)[0]
-
     future_sales.append(pred)
 
-future_dates = [last_date + timedelta(weeks=i+1) for i in range(weeks_ahead)]
+future_dates = [last_date + timedelta(weeks=i + 1) for i in range(weeks_ahead)]
 
 future_df = pd.DataFrame({
     "Date": future_dates,

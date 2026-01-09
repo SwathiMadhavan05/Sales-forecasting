@@ -1,5 +1,4 @@
-#force css reload 
-
+# --------------------------------------------------
 # IMPORTS
 # --------------------------------------------------
 import os
@@ -18,10 +17,13 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 # --------------------------------------------------
 # PAGE CONFIG
 # --------------------------------------------------
-st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
+st.set_page_config(
+    page_title="Sales Forecasting Dashboard",
+    layout="wide"
+)
 
 # --------------------------------------------------
-# CUSTOM CSS (FINAL FIXED VERSION)
+# GLOBAL UI THEME (CLEAN + STABLE)
 # --------------------------------------------------
 st.markdown(
     f"""
@@ -30,52 +32,55 @@ st.markdown(
 
     @import url('https://fonts.cdnfonts.com/css/satoshi');
 
-    * {{
+    /* ---------- GLOBAL ---------- */
+    html, body, * {{
         font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif !important;
         color: #0f172a !important;
     }}
 
-    /* App background */
+    /* ---------- MAIN BACKGROUND ---------- */
     .stApp {{
-        background-color: #eaf2ff;
+        background-color: #1e3a8a;  /* Blue */
     }}
 
-    /* Main container */
+    /* ---------- PAGE CONTENT ---------- */
     .block-container {{
         padding-top: 2rem;
+        padding-bottom: 2rem;
+        background-color: transparent;
     }}
 
-    /* Headings */
-    h1, h2, h3, h4, h5, h6,
-    [data-testid="stMarkdownContainer"] h1,
-    [data-testid="stMarkdownContainer"] h2,
-    [data-testid="stMarkdownContainer"] h3 {{
-        color: #0f172a !important;
+    /* ---------- WHITE CARDS ---------- */
+    section[data-testid="stVerticalBlock"] > div {{
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+    }}
+
+    /* ---------- HEADINGS ---------- */
+    h1, h2, h3, h4, h5, h6 {{
         font-weight: 700 !important;
-    }}
-
-    /* Markdown text */
-    [data-testid="stMarkdownContainer"] * {{
         color: #0f172a !important;
     }}
 
-    /* Sidebar */
+    /* ---------- SIDEBAR ---------- */
     [data-testid="stSidebar"] {{
         background-color: #ffffff;
-        border-right: 1px solid #e2e8f0;
+        border-right: 1px solid #e5e7eb;
     }}
 
     [data-testid="stSidebar"] * {{
         color: #0f172a !important;
     }}
 
-    /* Metrics */
+    /* ---------- METRICS ---------- */
     [data-testid="stMetric"] {{
         background-color: #ffffff;
-        padding: 16px;
         border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+        padding: 1.2rem;
+        border: 1px solid #e5e7eb;
     }}
 
     [data-testid="stMetricLabel"] {{
@@ -86,23 +91,35 @@ st.markdown(
     [data-testid="stMetricValue"] {{
         color: #0f172a !important;
         font-size: 28px;
-        font-weight: 700 !important;
+        font-weight: 700;
     }}
 
-    /* Inputs */
-    input, select, textarea {{
+    /* ---------- INPUTS ---------- */
+    input, textarea, select {{
         color: #0f172a !important;
     }}
 
-    /* Buttons */
+    /* ---------- BUTTONS ---------- */
     button {{
         background-color: #2563eb !important;
         color: #ffffff !important;
-        border-radius: 10px !important;
         font-weight: 600 !important;
+        border-radius: 10px !important;
+        border: none !important;
     }}
 
-    /* Hide footer */
+    button:hover {{
+        background-color: #1d4ed8 !important;
+    }}
+
+    /* ---------- DATAFRAME ---------- */
+    [data-testid="stDataFrame"] {{
+        background-color: #ffffff;
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+    }}
+
+    /* ---------- HIDE FOOTER ---------- */
     footer {{
         visibility: hidden;
     }}
@@ -142,26 +159,12 @@ df = load_data()
 # --------------------------------------------------
 st.sidebar.header("🔧 User Inputs")
 
-store_id = st.sidebar.selectbox(
-    "Select Store",
-    options=sorted(df["Store"].unique()),
-    format_func=lambda x: f"Store {x}"
-)
-
-dept_id = st.sidebar.selectbox(
-    "Select Department",
-    options=sorted(df["Dept"].unique()),
-    format_func=lambda x: f"Department {x}"
-)
-
-min_date = df["Date"].min()
-max_date = df["Date"].max()
+store_id = st.sidebar.selectbox("Select Store", sorted(df["Store"].unique()))
+dept_id = st.sidebar.selectbox("Select Department", sorted(df["Dept"].unique()))
 
 date_range = st.sidebar.date_input(
     "Select Date Range",
-    [min_date, max_date],
-    min_value=min_date,
-    max_value=max_date
+    [df["Date"].min(), df["Date"].max()]
 )
 
 model_type = st.sidebar.radio(
@@ -183,109 +186,71 @@ filtered_df = df[
 ]
 
 if holiday_only:
-    filtered_df = filtered_df[filtered_df["IsHoliday"] == True]
+    filtered_df = filtered_df[filtered_df["IsHoliday"]]
 
 if filtered_df.shape[0] < 30:
     st.warning("Not enough data for selected inputs.")
     st.stop()
 
 # --------------------------------------------------
-# BUSINESS METRICS
+# METRICS
 # --------------------------------------------------
 st.subheader("📌 Key Business Metrics")
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Sales", f"{filtered_df['Weekly_Sales'].sum():,.0f}")
-col2.metric("Average Weekly Sales", f"{filtered_df['Weekly_Sales'].mean():,.0f}")
-col3.metric("Maximum Weekly Sales", f"{filtered_df['Weekly_Sales'].max():,.0f}")
+c1, c2, c3 = st.columns(3)
+c1.metric("Total Sales", f"{filtered_df['Weekly_Sales'].sum():,.0f}")
+c2.metric("Average Weekly Sales", f"{filtered_df['Weekly_Sales'].mean():,.0f}")
+c3.metric("Max Weekly Sales", f"{filtered_df['Weekly_Sales'].max():,.0f}")
 
 # --------------------------------------------------
-# FEATURE SELECTION
+# MODEL
 # --------------------------------------------------
-feature_cols = [
-    "Year", "Month", "Week", "IsHoliday",
-    "Temperature", "Fuel_Price", "CPI",
-    "Unemployment", "Size"
+X = filtered_df[
+    ["Year", "Month", "Week", "IsHoliday",
+     "Temperature", "Fuel_Price", "CPI",
+     "Unemployment", "Size"]
 ]
-
-X = filtered_df[feature_cols]
 y = filtered_df["Weekly_Sales"]
 
-# --------------------------------------------------
-# TRAIN / TEST SPLIT
-# --------------------------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, shuffle=False
 )
 
-# --------------------------------------------------
-# MODEL TRAINING
-# --------------------------------------------------
 if model_type == "Linear Regression":
     model = LinearRegression()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    X_future = X.tail(1).copy()
 else:
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
-    model = SVR(kernel="rbf", C=100, epsilon=0.1)
-    model.fit(X_train_scaled, y_train)
-    y_pred = model.predict(X_test_scaled)
-    X_future = scaler.transform(X.tail(1))
+    model = SVR(C=100, epsilon=0.1)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
 
 # --------------------------------------------------
-# MODEL METRICS
+# PERFORMANCE
 # --------------------------------------------------
-mae = mean_absolute_error(y_test, y_pred)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-
 st.subheader("📈 Model Performance")
-c4, c5 = st.columns(2)
-c4.metric("MAE", f"{mae:,.2f}")
-c5.metric("RMSE", f"{rmse:,.2f}")
+
+m1, m2 = st.columns(2)
+m1.metric("MAE", f"{mean_absolute_error(y_test, y_pred):,.2f}")
+m2.metric("RMSE", f"{np.sqrt(mean_squared_error(y_test, y_pred)):,.2f}")
 
 # --------------------------------------------------
-# ACTUAL VS PREDICTED
+# PLOT
 # --------------------------------------------------
 st.subheader("📉 Actual vs Predicted Sales")
 
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(y_test.values, label="Actual")
 ax.plot(y_pred, label="Predicted")
-ax.set_xlabel("Time")
-ax.set_ylabel("Weekly Sales")
 ax.legend()
 st.pyplot(fig)
 
 # --------------------------------------------------
-# FUTURE FORECAST
-# --------------------------------------------------
-st.subheader("🔮 Future Sales Forecast")
-
-future_sales = []
-last_date = filtered_df["Date"].max()
-
-for _ in range(weeks_ahead):
-    if model_type == "Linear Regression":
-        pred = model.predict(X.tail(1))[0]
-    else:
-        pred = model.predict(X_future)[0]
-    future_sales.append(pred)
-
-future_dates = [last_date + timedelta(weeks=i + 1) for i in range(weeks_ahead)]
-
-future_df = pd.DataFrame({
-    "Date": future_dates,
-    "Predicted Sales": future_sales
-})
-
-st.line_chart(future_df.set_index("Date"))
-
-# --------------------------------------------------
 # DATA PREVIEW
 # --------------------------------------------------
-st.subheader("📄 Filtered Data Preview")
+st.subheader("📄 Data Preview")
 st.dataframe(filtered_df.head(20))

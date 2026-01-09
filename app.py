@@ -17,13 +17,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 # --------------------------------------------------
 # PAGE CONFIG
 # --------------------------------------------------
-st.set_page_config(
-    page_title="Sales Forecasting Dashboard",
-    layout="wide"
-)
+st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 
 # --------------------------------------------------
-# UI THEME (BLUE BACKGROUND · WHITE CARDS · WHITE HEADINGS)
+# FINAL UI THEME
 # --------------------------------------------------
 st.markdown(
     f"""
@@ -32,23 +29,22 @@ st.markdown(
 
     @import url('https://fonts.cdnfonts.com/css/satoshi');
 
-    /* ---------- GLOBAL ---------- */
+    /* GLOBAL FONT */
     html, body, * {{
         font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }}
 
-    /* ---------- MAIN BACKGROUND ---------- */
+    /* MAIN BACKGROUND */
     .stApp {{
         background-color: #1e3a8a;
     }}
 
-    /* ---------- CONTENT ---------- */
+    /* PAGE CONTENT */
     .block-container {{
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding: 2rem;
     }}
 
-    /* ---------- WHITE CARDS ---------- */
+    /* WHITE CARDS */
     section[data-testid="stVerticalBlock"] > div {{
         background-color: #ffffff;
         padding: 1.5rem;
@@ -57,35 +53,38 @@ st.markdown(
         box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }}
 
-    /* ---------- SECTION HEADINGS (WHITE) ---------- */
+    /* SECTION HEADINGS (WHITE) */
     h1, h2, h3 {{
         color: #ffffff !important;
         font-weight: 700 !important;
     }}
 
-    /* ---------- CARD TEXT ---------- */
+    /* CARD TEXT */
     p, span, div {{
         color: #0f172a;
     }}
 
-    /* ---------- SIDEBAR ---------- */
+    /* SIDEBAR */
     [data-testid="stSidebar"] {{
         background-color: #0f172a;
     }}
 
+    /* SIDEBAR LABELS */
     [data-testid="stSidebar"] label {{
         color: #ffffff !important;
         font-weight: 500;
     }}
 
-    /* Selected value text (dropdowns & date input) */
+    /* SIDEBAR INPUT TEXT */
     [data-testid="stSidebar"] .stSelectbox div,
-    [data-testid="stSidebar"] .stDateInput div,
-    [data-testid="stSidebar"] input {{
+    [data-testid="stSidebar"] .stDateInput input,
+    [data-testid="stSidebar"] .stRadio div,
+    [data-testid="stSidebar"] .stCheckbox div,
+    [data-testid="stSidebar"] .stSlider {{
         color: #ffffff !important;
     }}
 
-    /* ---------- METRICS ---------- */
+    /* METRICS */
     [data-testid="stMetric"] {{
         background-color: #ffffff;
         border-radius: 14px;
@@ -104,26 +103,27 @@ st.markdown(
         font-weight: 700;
     }}
 
-    /* ---------- BUTTONS ---------- */
+    /* BUTTONS */
     button {{
         background-color: #2563eb !important;
         color: #ffffff !important;
         font-weight: 600 !important;
         border-radius: 10px !important;
+        border: none !important;
     }}
 
     button:hover {{
         background-color: #1d4ed8 !important;
     }}
 
-    /* ---------- DATAFRAME ---------- */
+    /* DATAFRAME */
     [data-testid="stDataFrame"] {{
         background-color: #ffffff;
         border-radius: 14px;
         border: 1px solid #e5e7eb;
     }}
 
-    /* ---------- HIDE FOOTER ---------- */
+    /* HIDE FOOTER */
     footer {{
         visibility: hidden;
     }}
@@ -159,7 +159,7 @@ def load_data():
 df = load_data()
 
 # --------------------------------------------------
-# SIDEBAR INPUTS (NO EMOJIS)
+# SIDEBAR INPUTS
 # --------------------------------------------------
 st.sidebar.header("User Inputs")
 
@@ -197,7 +197,7 @@ if filtered_df.shape[0] < 30:
     st.stop()
 
 # --------------------------------------------------
-# KEY BUSINESS METRICS (NO EMOJIS)
+# KEY BUSINESS METRICS
 # --------------------------------------------------
 st.subheader("Key Business Metrics")
 
@@ -234,7 +234,7 @@ else:
     y_pred = model.predict(X_test)
 
 # --------------------------------------------------
-# MODEL PERFORMANCE (NO EMOJIS)
+# MODEL PERFORMANCE
 # --------------------------------------------------
 st.subheader("Model Performance")
 
@@ -243,7 +243,7 @@ m1.metric("MAE", f"{mean_absolute_error(y_test, y_pred):,.2f}")
 m2.metric("RMSE", f"{np.sqrt(mean_squared_error(y_test, y_pred)):,.2f}")
 
 # --------------------------------------------------
-# ACTUAL VS PREDICTED (NO EMOJIS)
+# ACTUAL VS PREDICTED
 # --------------------------------------------------
 st.subheader("Actual vs Predicted Sales")
 

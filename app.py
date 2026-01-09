@@ -23,7 +23,7 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# GLOBAL UI THEME (CLEAN + STABLE)
+# UI THEME (BLUE BACKGROUND · WHITE CARDS · WHITE HEADINGS)
 # --------------------------------------------------
 st.markdown(
     f"""
@@ -35,19 +35,17 @@ st.markdown(
     /* ---------- GLOBAL ---------- */
     html, body, * {{
         font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        color: #0f172a !important;
     }}
 
     /* ---------- MAIN BACKGROUND ---------- */
     .stApp {{
-        background-color: #1e3a8a;  /* Blue */
+        background-color: #1e3a8a;
     }}
 
-    /* ---------- PAGE CONTENT ---------- */
+    /* ---------- CONTENT ---------- */
     .block-container {{
         padding-top: 2rem;
         padding-bottom: 2rem;
-        background-color: transparent;
     }}
 
     /* ---------- WHITE CARDS ---------- */
@@ -56,23 +54,35 @@ st.markdown(
         padding: 1.5rem;
         border-radius: 16px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }}
 
-    /* ---------- HEADINGS ---------- */
-    h1, h2, h3, h4, h5, h6 {{
+    /* ---------- SECTION HEADINGS (WHITE) ---------- */
+    h1, h2, h3 {{
+        color: #ffffff !important;
         font-weight: 700 !important;
-        color: #0f172a !important;
+    }}
+
+    /* ---------- CARD TEXT ---------- */
+    p, span, div {{
+        color: #0f172a;
     }}
 
     /* ---------- SIDEBAR ---------- */
     [data-testid="stSidebar"] {{
-        background-color: #ffffff;
-        border-right: 1px solid #e5e7eb;
+        background-color: #0f172a;
     }}
 
-    [data-testid="stSidebar"] * {{
-        color: #0f172a !important;
+    [data-testid="stSidebar"] label {{
+        color: #ffffff !important;
+        font-weight: 500;
+    }}
+
+    /* Selected value text (dropdowns & date input) */
+    [data-testid="stSidebar"] .stSelectbox div,
+    [data-testid="stSidebar"] .stDateInput div,
+    [data-testid="stSidebar"] input {{
+        color: #ffffff !important;
     }}
 
     /* ---------- METRICS ---------- */
@@ -94,18 +104,12 @@ st.markdown(
         font-weight: 700;
     }}
 
-    /* ---------- INPUTS ---------- */
-    input, textarea, select {{
-        color: #0f172a !important;
-    }}
-
     /* ---------- BUTTONS ---------- */
     button {{
         background-color: #2563eb !important;
         color: #ffffff !important;
         font-weight: 600 !important;
         border-radius: 10px !important;
-        border: none !important;
     }}
 
     button:hover {{
@@ -155,9 +159,9 @@ def load_data():
 df = load_data()
 
 # --------------------------------------------------
-# SIDEBAR INPUTS
+# SIDEBAR INPUTS (NO EMOJIS)
 # --------------------------------------------------
-st.sidebar.header("🔧 User Inputs")
+st.sidebar.header("User Inputs")
 
 store_id = st.sidebar.selectbox("Select Store", sorted(df["Store"].unique()))
 dept_id = st.sidebar.selectbox("Select Department", sorted(df["Dept"].unique()))
@@ -193,14 +197,14 @@ if filtered_df.shape[0] < 30:
     st.stop()
 
 # --------------------------------------------------
-# METRICS
+# KEY BUSINESS METRICS (NO EMOJIS)
 # --------------------------------------------------
-st.subheader("📌 Key Business Metrics")
+st.subheader("Key Business Metrics")
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Total Sales", f"{filtered_df['Weekly_Sales'].sum():,.0f}")
 c2.metric("Average Weekly Sales", f"{filtered_df['Weekly_Sales'].mean():,.0f}")
-c3.metric("Max Weekly Sales", f"{filtered_df['Weekly_Sales'].max():,.0f}")
+c3.metric("Maximum Weekly Sales", f"{filtered_df['Weekly_Sales'].max():,.0f}")
 
 # --------------------------------------------------
 # MODEL
@@ -230,18 +234,18 @@ else:
     y_pred = model.predict(X_test)
 
 # --------------------------------------------------
-# PERFORMANCE
+# MODEL PERFORMANCE (NO EMOJIS)
 # --------------------------------------------------
-st.subheader("📈 Model Performance")
+st.subheader("Model Performance")
 
 m1, m2 = st.columns(2)
 m1.metric("MAE", f"{mean_absolute_error(y_test, y_pred):,.2f}")
 m2.metric("RMSE", f"{np.sqrt(mean_squared_error(y_test, y_pred)):,.2f}")
 
 # --------------------------------------------------
-# PLOT
+# ACTUAL VS PREDICTED (NO EMOJIS)
 # --------------------------------------------------
-st.subheader("📉 Actual vs Predicted Sales")
+st.subheader("Actual vs Predicted Sales")
 
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(y_test.values, label="Actual")
@@ -252,5 +256,5 @@ st.pyplot(fig)
 # --------------------------------------------------
 # DATA PREVIEW
 # --------------------------------------------------
-st.subheader("📄 Data Preview")
+st.subheader("Filtered Data Preview")
 st.dataframe(filtered_df.head(20))

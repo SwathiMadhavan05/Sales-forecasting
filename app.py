@@ -148,6 +148,8 @@ def load_data():
 # DASHBOARD
 # --------------------------------------------------
 def dashboard():
+        st.title("Sales Forecasting Dashboard")
+
     df = load_data()
 
     # SIDEBAR

@@ -25,14 +25,15 @@ st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 if "page" not in st.session_state:
     st.session_state.page = "landing"
 
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
 # --------------------------------------------------
 # CSS (STABLE + SAFE)
 # --------------------------------------------------
 st.markdown(
     f"""
     <style>
-    /* cache buster {np.random.rand()} */
-
     @import url('https://fonts.cdnfonts.com/css/satoshi');
 
     * {{
@@ -71,7 +72,6 @@ st.markdown(
 
     [data-testid="stSidebar"] * {{
         color: white !important;
-        fill: white !important;
     }}
 
     button {{
@@ -79,6 +79,7 @@ st.markdown(
         color: white !important;
         border-radius: 10px !important;
         font-weight: 600;
+        padding: 0.6rem 1rem;
     }}
 
     footer {{
@@ -116,9 +117,41 @@ def landing_page():
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("Enter Dashboard", use_container_width=True):
+        if st.button("Get Started", use_container_width=True):
+            st.session_state.page = "login"
+            st.rerun()
+
+# --------------------------------------------------
+# LOGIN PAGE (OAUTH-STYLE)
+# --------------------------------------------------
+def login_page():
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(
+            """
+            <div style="text-align:center;">
+                <h2>Sign in to continue</h2>
+                <p>Use your Google account to access the dashboard</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Placeholder for Google OAuth
+        if st.button("Continue with Google", use_container_width=True):
+            # TEMPORARY MOCK AUTH (real OAuth comes next)
+            st.session_state.authenticated = True
             st.session_state.page = "dashboard"
             st.rerun()
+
+        st.markdown(
+            "<p style='text-align:center; font-size:14px;'>No passwords are stored</p>",
+            unsafe_allow_html=True
+        )
 
 # --------------------------------------------------
 # LOAD DATA
@@ -148,11 +181,17 @@ def load_data():
 # DASHBOARD
 # --------------------------------------------------
 def dashboard():
-        st.title("Sales Forecasting Dashboard")
-
     df = load_data()
 
-    # SIDEBAR
+    # LOGOUT
+    if st.sidebar.button("Logout"):
+        st.session_state.authenticated = False
+        st.session_state.page = "landing"
+        st.rerun()
+
+    st.title("Sales Forecasting Dashboard")
+
+    # SIDEBAR INPUTS
     st.sidebar.header("User Inputs")
 
     store_id = st.sidebar.selectbox("Select Store", sorted(df["Store"].unique()))
@@ -234,12 +273,17 @@ def dashboard():
     st.dataframe(filtered_df.head(20))
 
 # --------------------------------------------------
-# PAGE SWITCH
+# PAGE ROUTER
 # --------------------------------------------------
 if st.session_state.page == "landing":
     landing_page()
+
+elif st.session_state.page == "login":
+    login_page()
+
 else:
-    dashboard()
-
-
-
+    if st.session_state.authenticated:
+        dashboard()
+    else:
+        st.session_state.page = "login"
+        st.rerun()

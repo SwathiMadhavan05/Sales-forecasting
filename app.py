@@ -7,7 +7,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from datetime import timedelta
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split 
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.preprocessing import StandardScaler
@@ -331,6 +331,8 @@ def dashboard():
 # --------------------------------------------------
 # PAGE ROUTER
 # --------------------------------------------------
+handle_google_callback()
+
 if st.session_state.page == "landing":
     landing_page()
 

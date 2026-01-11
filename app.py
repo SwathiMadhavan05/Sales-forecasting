@@ -1,116 +1,109 @@
+# =========================
+# IMPORTS
+# =========================
 import json
-from authlib.integrations.requests_client import OAuth2Session
 import os
-import pandas as pd
-import numpy as np
-import streamlit as st
-import matplotlib.pyplot as plt
 from datetime import timedelta
 
-from sklearn.model_selection import train_test_split 
+import numpy as np
+import pandas as pd
+import streamlit as st
+import matplotlib.pyplot as plt
+
+from authlib.integrations.requests_client import OAuth2Session
+
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-# --------------------------------------------------
-# PAGE CONFIG
-# --------------------------------------------------
-st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 
-# --------------------------------------------------
+# =========================
+# PAGE CONFIG
+# =========================
+st.set_page_config(
+    page_title="Sales Forecasting Dashboard",
+    layout="wide"
+)
+
+
+# =========================
 # SESSION STATE
-# --------------------------------------------------
+# =========================
 if "page" not in st.session_state:
     st.session_state.page = "landing"
 
-oauth = OAuth2Session(
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
-    scope="openid email profile",
-    redirect_uri=REDIRECT_URI,
-)
-
-auth_url, state = oauth.create_authorization_url(GOOGLE_AUTH_URL)
-st.session_state.oauth_state = state
-
-st.markdown(
-    f"""
-    <a href="{auth_url}">
-        <button style="width:100%; padding:10px;">
-            Continue with Google
-        </button>
-    </a>
-    """,
-    unsafe_allow_html=True
-)
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
 
-# --------------------------------------------------
-# CSS (STABLE + SAFE)
-# --------------------------------------------------
-st.markdown(
-    f"""
-    <style>
-    @import url('https://fonts.cdnfonts.com/css/satoshi');
+# =========================
+# CSS
+# =========================
+st.markdown("""
+<style>
+@import url('https://fonts.cdnfonts.com/css/satoshi');
 
-    * {{
-        font-family: 'Satoshi', sans-serif !important;
-    }}
+* {
+    font-family: 'Satoshi', sans-serif !important;
+}
 
-    .stApp {{
-        background-color: #1e3a8a;
-    }}
+.stApp {
+    background-color: #1e3a8a;
+}
 
-    .block-container {{
-        padding: 2rem;
-    }}
+.block-container {
+    padding: 2rem;
+}
 
-    section[data-testid="stVerticalBlock"] > div {{
-        background: white;
-        padding: 1.5rem;
-        border-radius: 16px;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        color: #0f172a;
-    }}
+section[data-testid="stVerticalBlock"] > div {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    color: #0f172a;
+}
 
-    h1, h2, h3 {{
-        color: white !important;
-        font-weight: 700;
-    }}
+h1, h2, h3 {
+    color: white !important;
+    font-weight: 700;
+}
 
-    .block-container * {{
-        color: #0f172a;
-    }}
+.block-container * {
+    color: #0f172a;
+}
 
-    [data-testid="stSidebar"] {{
-        background-color: #0f172a;
-    }}
+[data-testid="stSidebar"] {
+    background-color: #0f172a;
+}
 
-    [data-testid="stSidebar"] * {{
-        color: white !important;
-    }}
+[data-testid="stSidebar"] * {
+    color: white !important;
+}
 
-    button {{
-        background-color: #2563eb !important;
-        color: white !important;
-        border-radius: 10px !important;
-        font-weight: 600;
-        padding: 0.6rem 1rem;
-    }}
+button {
+    background-color: #2563eb !important;
+    color: white !important;
+    border-radius: 10px !important;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+}
 
-    footer {{
-        visibility: hidden;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+footer {
+    visibility: hidden;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# =========================
+# GOOGLE OAUTH CONFIG
+# =========================
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
-
 REDIRECT_URI = "http://localhost:8501"
 
 with open("google_oauth.json") as f:
@@ -120,28 +113,25 @@ CLIENT_ID = google_creds["client_id"]
 CLIENT_SECRET = google_creds["client_secret"]
 
 
-# --------------------------------------------------
-# LANDING PAGE
-# --------------------------------------------------
+# =========================
+# PAGES
+# =========================
 def landing_page():
-    st.markdown(
-        """
-        <div style="
-            background: linear-gradient(135deg, #1e3a8a, #2563eb);
-            padding: 80px 40px;
-            border-radius: 24px;
-            text-align: center;
-            color: white;
-        ">
-            <h1 style="font-size:48px;">Sales Forecasting Dashboard</h1>
-            <p style="font-size:20px; max-width:700px; margin:auto;">
-                Forecast sales trends, evaluate performance,
-                and make data-driven business decisions.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        padding: 80px 40px;
+        border-radius: 24px;
+        text-align: center;
+        color: white;
+    ">
+        <h1 style="font-size:48px;">Sales Forecasting Dashboard</h1>
+        <p style="font-size:20px; max-width:700px; margin:auto;">
+            Forecast sales trends, evaluate performance,
+            and make data-driven business decisions.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
@@ -151,63 +141,38 @@ def landing_page():
             st.session_state.page = "login"
             st.rerun()
 
-# --------------------------------------------------
-# LOGIN PAGE (OAUTH-STYLE)
-# --------------------------------------------------
+
 def login_page():
     st.markdown("<br><br>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown(
-            """
-            <div style="text-align:center;">
-                <h2>Sign in to continue</h2>
-                <p>Use your Google account to access the dashboard</p>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.markdown("""
+        <div style="text-align:center;">
+            <h2>Sign in to continue</h2>
+            <p>Use your Google account to access the dashboard</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        oauth = OAuth2Session(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            scope="openid email profile",
+            redirect_uri=REDIRECT_URI,
         )
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        auth_url, state = oauth.create_authorization_url(GOOGLE_AUTH_URL)
+        st.session_state.oauth_state = state
 
-        # Placeholder for Google OAuth
-        if st.button("Continue with Google", use_container_width=True):
-            # TEMPORARY MOCK AUTH (real OAuth comes next)
-            st.session_state.authenticated = True
-            st.session_state.page = "dashboard"
-            st.rerun()
+        st.markdown(f"""
+        <a href="{auth_url}">
+            <button style="width:100%;">
+                Continue with Google
+            </button>
+        </a>
+        """, unsafe_allow_html=True)
 
-        st.markdown(
-            "<p style='text-align:center; font-size:14px;'>No passwords are stored</p>",
-            unsafe_allow_html=True
-        )
 
-# --------------------------------------------------
-# LOAD DATA
-# --------------------------------------------------
-@st.cache_data
-
-def load_data():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-
-    train = pd.read_csv(os.path.join(base_dir, "data", "train.csv"))
-    features = pd.read_csv(os.path.join(base_dir, "data", "features.csv"))
-    stores = pd.read_csv(os.path.join(base_dir, "data", "stores.csv"))
-
-    df = train.merge(features, on=["Store", "Date", "IsHoliday"], how="left")
-    df = df.merge(stores, on="Store", how="left")
-
-    df["Date"] = pd.to_datetime(df["Date"])
-    df.fillna(method="ffill", inplace=True)
-    df.fillna(method="bfill", inplace=True)
-
-    df["Year"] = df["Date"].dt.year
-    df["Month"] = df["Date"].dt.month
-    df["Week"] = df["Date"].dt.isocalendar().week.astype(int)
-
-    return df
-    
 def handle_google_callback():
     params = st.experimental_get_query_params()
     if "code" not in params:
@@ -233,13 +198,32 @@ def handle_google_callback():
     st.experimental_set_query_params()
     st.rerun()
 
-# --------------------------------------------------
-# DASHBOARD
-# --------------------------------------------------
+
+@st.cache_data
+def load_data():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    train = pd.read_csv(os.path.join(base_dir, "data", "train.csv"))
+    features = pd.read_csv(os.path.join(base_dir, "data", "features.csv"))
+    stores = pd.read_csv(os.path.join(base_dir, "data", "stores.csv"))
+
+    df = train.merge(features, on=["Store", "Date", "IsHoliday"], how="left")
+    df = df.merge(stores, on="Store", how="left")
+
+    df["Date"] = pd.to_datetime(df["Date"])
+    df.fillna(method="ffill", inplace=True)
+    df.fillna(method="bfill", inplace=True)
+
+    df["Year"] = df["Date"].dt.year
+    df["Month"] = df["Date"].dt.month
+    df["Week"] = df["Date"].dt.isocalendar().week.astype(int)
+
+    return df
+
+
 def dashboard():
     df = load_data()
 
-    # LOGOUT
     if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
         st.session_state.page = "landing"
@@ -247,9 +231,7 @@ def dashboard():
 
     st.title("Sales Forecasting Dashboard")
 
-    # SIDEBAR INPUTS
     st.sidebar.header("User Inputs")
-
     store_id = st.sidebar.selectbox("Select Store", sorted(df["Store"].unique()))
     dept_id = st.sidebar.selectbox("Select Department", sorted(df["Dept"].unique()))
 
@@ -266,7 +248,6 @@ def dashboard():
     holiday_only = st.sidebar.checkbox("Show Holiday Sales Only")
     weeks_ahead = st.sidebar.slider("Forecast Weeks Ahead", 1, 12, 4)
 
-    # FILTER DATA
     filtered_df = df[
         (df["Store"] == store_id) &
         (df["Dept"] == dept_id) &
@@ -279,16 +260,14 @@ def dashboard():
 
     if len(filtered_df) < 30:
         st.warning("Not enough data for selected inputs.")
-        st.stop()
+        return
 
-    # METRICS
     st.subheader("Key Business Metrics")
     c1, c2, c3 = st.columns(3)
     c1.metric("Total Sales", f"{filtered_df['Weekly_Sales'].sum():,.0f}")
     c2.metric("Average Weekly Sales", f"{filtered_df['Weekly_Sales'].mean():,.0f}")
     c3.metric("Maximum Weekly Sales", f"{filtered_df['Weekly_Sales'].max():,.0f}")
 
-    # MODEL
     X = filtered_df[
         ["Year", "Month", "Week", "IsHoliday",
          "Temperature", "Fuel_Price", "CPI",
@@ -310,13 +289,11 @@ def dashboard():
         model = SVR(C=100, epsilon=0.1).fit(X_train, y_train)
         y_pred = model.predict(X_test)
 
-    # PERFORMANCE
     st.subheader("Model Performance")
     m1, m2 = st.columns(2)
     m1.metric("MAE", f"{mean_absolute_error(y_test, y_pred):,.2f}")
     m2.metric("RMSE", f"{np.sqrt(mean_squared_error(y_test, y_pred)):,.2f}")
 
-    # PLOT
     st.subheader("Actual vs Predicted Sales")
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(y_test.values, label="Actual")
@@ -324,21 +301,19 @@ def dashboard():
     ax.legend()
     st.pyplot(fig)
 
-    # DATA PREVIEW
     st.subheader("Filtered Data Preview")
     st.dataframe(filtered_df.head(20))
 
-# --------------------------------------------------
-# PAGE ROUTER
-# --------------------------------------------------
+
+# =========================
+# ROUTER
+# =========================
 handle_google_callback()
 
 if st.session_state.page == "landing":
     landing_page()
-
 elif st.session_state.page == "login":
     login_page()
-
 else:
     if st.session_state.authenticated:
         dashboard()

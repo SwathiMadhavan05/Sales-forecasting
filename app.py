@@ -1,6 +1,5 @@
-# --------------------------------------------------
-# IMPORTS
-# --------------------------------------------------
+import json
+from authlib.integrations.requests_client import OAuth2Session
 import os
 import pandas as pd
 import numpy as np
@@ -25,8 +24,27 @@ st.set_page_config(page_title="Sales Forecasting Dashboard", layout="wide")
 if "page" not in st.session_state:
     st.session_state.page = "landing"
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+oauth = OAuth2Session(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    scope="openid email profile",
+    redirect_uri=REDIRECT_URI,
+)
+
+auth_url, state = oauth.create_authorization_url(GOOGLE_AUTH_URL)
+st.session_state.oauth_state = state
+
+st.markdown(
+    f"""
+    <a href="{auth_url}">
+        <button style="width:100%; padding:10px;">
+            Continue with Google
+        </button>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # --------------------------------------------------
 # CSS (STABLE + SAFE)
@@ -89,6 +107,18 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+
+REDIRECT_URI = "http://localhost:8501"
+
+with open("google_oauth.json") as f:
+    google_creds = json.load(f)["web"]
+
+CLIENT_ID = google_creds["client_id"]
+CLIENT_SECRET = google_creds["client_secret"]
+
 
 # --------------------------------------------------
 # LANDING PAGE
@@ -157,6 +187,7 @@ def login_page():
 # LOAD DATA
 # --------------------------------------------------
 @st.cache_data
+
 def load_data():
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -176,6 +207,31 @@ def load_data():
     df["Week"] = df["Date"].dt.isocalendar().week.astype(int)
 
     return df
+    
+def handle_google_callback():
+    params = st.experimental_get_query_params()
+    if "code" not in params:
+        return
+
+    oauth = OAuth2Session(
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        redirect_uri=REDIRECT_URI,
+    )
+
+    oauth.fetch_token(
+        GOOGLE_TOKEN_URL,
+        code=params["code"][0],
+    )
+
+    user_info = oauth.get(GOOGLE_USERINFO_URL).json()
+
+    st.session_state.user = user_info
+    st.session_state.authenticated = True
+    st.session_state.page = "dashboard"
+
+    st.experimental_set_query_params()
+    st.rerun()
 
 # --------------------------------------------------
 # DASHBOARD
